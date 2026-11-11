@@ -1,0 +1,53 @@
+# Non-secret configuration: source layouts, column mappings, bank profiles.
+# Secrets and personal data (holder names, keys) go in data/.env, never here.
+
+# ─── Excel history importer (design §8.1) ───────────────────────────────────
+excel:
+  # One sheet, 12 months side by side in blocks of 10 columns.
+  first_block_column: A
+  block_width: 10
+  months: 12
+  month_row: 1        # Italian month name, no year
+  section_row: 2      # Spesa / Affitto / Abbonamenti / Varie
+  header_row: 3       # Importo / Motivo under each section
+  first_data_row: 4
+  # The totals row is located by searching for SUM formulas, not by counting rows.
+  columns_per_section: 2
+  header_labels:
+    amount: Importo
+    description: Motivo
+  # Default section → category/kind mapping (editable on the import screen).
+  sections:
+    - name: Spesa
+      category: Cibo
+      kind: extraordinary
+    - name: Affitto
+      category: Affitto
+      parent_category: Casa
+      kind: recurring
+    - name: Abbonamenti
+      category: Abbonamenti
+      kind: recurring
+    - name: Varie
+      category: Varie
+      kind: extraordinary
+  # File amounts are positive but are expenses: stored as negative cents.
+  amounts_are_expenses: true
+
+# ─── Bank statements (phase 2, design §8.2) ─────────────────────────────────
+bank_profiles:
+  trade_republic_pdf:
+    account: Trade Republic
+    format: pdf
+    # Movement type (TIPO column) → classification (D17).
+    # Unknown types are imported as uncategorized with a warning, never dropped.
+    movement_types:
+      "Transazione con carta": { classification: expense }
+      "Commercio": { classification: investment, is_transfer: true, category: Investimenti }
+      "Bonifico": { classification: transfer_or_expense }
+      "Interessi": { classification: income, category: Interessi }
+      "Premio": { classification: income, category: Premi e cashback }
+      "Imposte": { classification: expense, category: Imposte e costi investimento }
+
+  # trade_republic_csv: pending I5 — needs a sample file with fake data.
+  # intesa_sanpaolo: pending I5 — needs a sample file with fake data.
